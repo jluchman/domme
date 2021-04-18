@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0 July 2 2019 J. N. Luchman}{...}
+{* *! version 1.0.1 April 17, 2021 J. N. Luchman}{...}
 {cmd:help domme}
 {hline}{...}
 
@@ -29,6 +29,16 @@ must be accepted by the command in {opt reg()}.
 (install here: {stata ssc install moremata}).  Users are strongly encouraged to install 
 {stata ssc install domin:domin} as well and read over its help file for basic information on 
 dominance analysis.
+
+{title:Development Webpage}
+
+{phang} Additional discussion of results, options, and conceptual issues on: 
+
+{phang}{browse "http://github.com/jluchman/domme/blob/master/README.md"}
+
+{phang} Please report bugs, requests for features, and contribute to as well as follow on-going development of {cmd:domin} on:
+
+{phang}{browse "http://github.com/jluchman/domme"}
 
 {title:Table of Contents}
 
