@@ -1,10 +1,10 @@
-*! domme version 1.1.0 xx/xx/202x Joseph N. Luchman
+*! domme version 1.1.0 2/7/2023 Joseph N. Luchman
 
-program define domme, eclass // ~ history and version information at end of file ~
+program define domme, eclass 																			// ~ history and version information at end of file ~
 
 	version 15.1
 
-	if replay() & !strlen("`0'") { 	//replay results - error if "by"; domme allows nothing in "anything" - allow it to replay only when there is nothing in options
+	if replay() & !strlen("`0'") { 																		//replay results - error if "by"; domme allows nothing in "anything" - allow it to replay only when there is nothing in options
 
 		if ("`e(cmd)'" != "domme") error 301
 
@@ -18,16 +18,16 @@ program define domme, eclass // ~ history and version information at end of file
 
 	/*define syntax*/
 	syntax [anything(id="equation names" equalok)] [in] [if] ///
-		[aw pw iw fw], reg(string) Fitstat(string) [Sets(string) ///
+		[aw pw iw fw], Reg(string) Fitstat(string) [Sets(string) ///
 		noCOMplete noCONditional ///
 		REVerse all(string) EXTraconstr(numlist) ///
-		ROPts(string) ADDConstr(numlist)] //addconstr() and extraconstr() undocumented - for use in possible extensions
+		ROPts(string) ADDConstr(numlist)] 																//addconstr() and extraconstr() undocumented - for use in possible extensions
 
 	/*exit conditions*/
-	capture which lb_dominance.mlib	//is -domin- present?
+	capture which lb_dominance.mlib																		//is -domin- present?
 
 
-	if _rc { //if -domin- cannot be found, tell user to install it.
+	if _rc { 																							//if -domin- cannot be found, tell user to install it.
 
 		display "{err}Module {cmd:domin} not found.  Install " ///
 			"{cmd:domin} here {stata ssc install domin}."
@@ -37,56 +37,56 @@ program define domme, eclass // ~ history and version information at end of file
 	}
 
 	/*general set up*/
-	mata: model_specs = domme_specs() //initiate instance of domme_specs() structure
+	mata: model_specs = domme_specs() 																	//initiate instance of domme_specs() structure
 	
-	tempname ranks gendom stzd_gendom cdldom cptdom //temporary matrices for results
+	tempname ranks gendom stzd_gendom cdldom cptdom 													//temporary matrices for results
 
-	local two "`anything'" //rename the input equation-to-independent variable mapping in "anything": done to generalize and simplify loop below
+	local two "`anything'" 																				//rename the input equation-to-independent variable mapping in "anything": done to generalize and simplify loop below
 
-	local drop_exit = 0 //local macro indicating that -domme- should drop constraints made so they do not persist due to error/when something goes wrong before the end of command's successful execution
+	local drop_exit = 0 																				//local macro indicating that -domme- should drop constraints made so they do not persist due to error/when something goes wrong before the end of command's successful execution
 
 	//**process "anything" and obtain individual constraints**//
-	while strlen("`two'") {	//process the equation-to-independent variable mapping in "anything" if something is present...
+	while strlen("`two'") {																				//process the equation-to-independent variable mapping in "anything" if something is present...
 
-		gettoken one two: two, bind	//parse the equation-to-independent variable mapping to bind all parenthetical statements together and pull out first parenthetical statement/equation
+		gettoken one two: two, bind																		//parse the equation-to-independent variable mapping to bind all parenthetical statements together and pull out first parenthetical statement/equation
 
-		if !regexm("`one'", "=") { //exit if there is no equal sign to make an equation
+		if !regexm("`one'", "=") { 																		//exit if there is no equal sign to make an equation
 
 			display "{err}Equation {cmd:`one'} is missing a {cmd:=} to " ///
 				"distinguish equation and independent variable names."
 
-			local drop_exit = 1	//indicate that constraints will be dropped
+			local drop_exit = 1																			//indicate that constraints will be dropped
 
-			continue, break	//stop the -while- loop...
+			continue, break																				//stop the -while- loop...
 
 		}
 
-		local one = regexr("`one'", "[/(]", "")	//remove left paren from equation statement
+		local one = regexr("`one'", "[/(]", "")															//remove left paren from equation statement
 
-		local one = regexr("`one'", "[/)]", "")	//remove right paren from equation statement
+		local one = regexr("`one'", "[/)]", "")															//remove right paren from equation statement
 
-		gettoken dv ivlist: one, parse("=")	//further parse the focal equation to separate out dependent from independent variables
+		gettoken dv ivlist: one, parse("=")																//further parse the focal equation to separate out dependent from independent variables
 
-		if ( `: list sizeof dv' != 1 ) | regexm("`dv'", "=")  {	//multiple dependent variables/equations or no dependent variable where one should be... exit
+		if ( `: list sizeof dv' != 1 ) | regexm("`dv'", "=")  {											//multiple dependent variables/equations or no dependent variable where one should be... exit
 
 			display "{err}Invalid equation name specified for {cmd:(`dv'`ivlist')}."
 
-			local drop_exit = 1	//indicate that constraints will be dropped
+			local drop_exit = 1																			//indicate that constraints will be dropped
 
-			continue, break	//stop the -while- loop...
+			continue, break																				//stop the -while- loop...
 
 		}
 
-		local ivlist = regexr("`ivlist'", "=", "")	//remove the equal sign from the independent variable list
+		local ivlist = regexr("`ivlist'", "=", "")														//remove the equal sign from the independent variable list
 
-		if ( `: list sizeof ivlist' == 0 )  { //empty independent variable list... exit as an empty list is an error
+		if ( `: list sizeof ivlist' == 0 )  { 															//empty independent variable list... exit as an empty list is an error
 
 			display "{err}Empty set of independent variables specified for " ///
 				"equation {cmd:`dv'}."
 
-			local drop_exit = 1	 //indicate that constraints will be dropped
+			local drop_exit = 1	 																		//indicate that constraints will be dropped
 
-			continue, break	//stop the -while- loop...
+			continue, break																				//stop the -while- loop...
 
 		}
 
@@ -425,7 +425,7 @@ program define domme, eclass // ~ history and version information at end of file
 		scalar `allfs' = 0																				//defining fitstat of "all subsets" parameters as 0 - needed for dominance() function
 
 		if `:list sizeof all' {																			//if there is something in the "all" option
-
+			
 			local 2 "`all'"																				//rename the content of "all" to generalize and simplify loop below
 
 			while strlen("`2'") & !`drop_exit' {														//process the equation-to-independent variable mapping for "all"...
@@ -545,16 +545,16 @@ program define domme, eclass // ~ history and version information at end of file
 
 		if `built_in' {
 			
-			compute_fitstat `fit_opts' iscons //if a built-in fistat desired, estimate it; note constant model
+			compute_fitstat `fit_opts' iscons 															//if a built-in fistat desired, estimate it; note constant model
 			
 			scalar `consfs' = `fitstat'
 			
 		}
 
 		if !`built_in' & !missing(`fitstat') ///
-			scalar `consfs' = `fitstat'	//return constant model's fitstat if user supplied and not missing
+			scalar `consfs' = `fitstat'																	//return constant model's fitstat if user supplied and not missing
 		
-		if !`built_in' & missing(`fitstat') scalar `consfs' = 0 //otherwise assume the constant-only model is 0	
+		if !`built_in' & missing(`fitstat') scalar `consfs' = 0 										//otherwise assume the constant-only model is 0	
 
 		if strlen("`all'") {																			//distinguishes "all subsets" from "constant" fitstats/models
 
@@ -584,12 +584,12 @@ program define domme, eclass // ~ history and version information at end of file
 		st_local("conditional'"), st_local("complete"), ///
 		st_local("ivs"), ///
 		st_numscalar(st_local("allfs")), ///
-		st_numscalar(st_local("consfs"))*strtoreal(st_local("cons_no_add")))	//invoke "dominance()" function in Mata 
+		st_numscalar(st_local("consfs"))*strtoreal(st_local("cons_no_add")))							//invoke "dominance()" function in Mata 
 
 		/*translate r-class results from me_dominance() into temp results*/
-		matrix `gendom' = r(domwgts)																		//general dominance statistics
+		matrix `gendom' = r(domwgts)																	//general dominance statistics
 
-		matrix `stzd_gendom' = r(sdomwgts)															//standardized general dominance statistics
+		matrix `stzd_gendom' = r(sdomwgts)																//standardized general dominance statistics
 
 		matrix `ranks' = r(ranks)																		//ranks based on general dominance statistics
 
@@ -625,12 +625,14 @@ program define domme, eclass // ~ history and version information at end of file
 				st_matrix("`cptdom'", st_matrix("`cptdom'"):*-1 )										//reverse the sign of the complete dominance designations
 
 			matrix colnames `cptdom' = `cptivs'															//name the columns of the complete dominance designations
-
-			matrix coleq `cptdom' = dominated?															//name the equation for the columns "dominated?"
-
+										
+			mata: st_matrixcolstripe("`cptdom'", ///
+				("<?":+st_matrixcolstripe("`cptdom'")[,1], st_matrixcolstripe("`cptdom'")[,2]))			//add name the equation for the columns "<?" - replacement for "dominated?"
+			
 			matrix rownames `cptdom' = `cptivs'															//name the rows of the complete dominance designations
 
-			matrix roweq `cptdom' = dominates?															//name the equation for the columns "dominates?"
+			mata: st_matrixrowstripe("`cptdom'", ///
+				(">?":+st_matrixrowstripe("`cptdom'")[,1], st_matrixrowstripe("`cptdom'")[,2]))			//add name the equation for the rows ">?"  replacement for "dominates?"
 
 		}
 
@@ -733,7 +735,7 @@ program define domme, eclass // ~ history and version information at end of file
 
 	foreach constr of numlist `nobrkt_constrs' {														//go through each constraint that was made...
 
-		constraint drop `constr'																	//drop the constraint
+		constraint drop `constr'																		//drop the constraint
 
 	}
 
@@ -1054,8 +1056,10 @@ end
    // 1.0.1 - April 17, 2021 (initiating new versioning: #major.#minor.#patch)
    -update to documentation for SJ article
    -bug fix on constraint dropping with all() option and use with xi:
-   // 1.1.0 - xx/xx/xxxx
+   // 1.1.0 - February 7, 2023
    -leverage dominance() function in -domin-; create own function to function passing; Mata struct to handle input specs
    - -domin- now a dependency.
    - use an AssociativeArray to map parameters/parameter sets to constraints in a way that is conformable with -domin-
+   - extensive documentation update
+   - fixed complete dominance table display; retains equation name and adds informative prefix
 */
